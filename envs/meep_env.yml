@@ -1,0 +1,19 @@
+name: pmp
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pymeep>=1.20
+  - numpy
+  - scipy
+  - matplotlib
+  - h5py
+  - jupyter
+  - pytest
+  - pip
+  - jax
+  - jaxlib
+  - pip:
+    - gdstk
+    - scikit-image

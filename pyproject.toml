@@ -72,6 +72,7 @@ gds = [
 ]
 
 solvers = [
+    "pymeep>=1.20; sys_platform == 'linux'",  # Meep typically requires Linux/WSL
     "jax>=0.4.20",
     "jaxlib>=0.4.20",
     "tidy3d-core>=2.7.0",

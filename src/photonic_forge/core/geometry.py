@@ -405,6 +405,46 @@ class Bend90(SDF2D):
         return np.where(in_angular_range, radial_dist, endpoint_dist)
 
 
+
+@dataclass
+class DirectionalCoupler(SDF2D):
+    """Directional coupler (two parallel waveguides).
+
+    Attributes:
+        length: Length of the coupling region.
+        width: Width of each waveguide.
+        gap: Gap between waveguides.
+        center: (x, y) center of the coupling region.
+    """
+
+    length: float
+    width: float
+    gap: float
+    center: Point2D = (0.0, 0.0)
+
+    def distance(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        """Signed distance to coupler."""
+        cx, cy = self.center
+        y_offset = (self.width + self.gap) / 2
+        
+        # Top waveguide
+        wg_top = Waveguide(
+            start=(cx - self.length / 2, cy + y_offset),
+            end=(cx + self.length / 2, cy + y_offset),
+            width=self.width,
+        )
+        
+        # Bottom waveguide
+        wg_bot = Waveguide(
+            start=(cx - self.length / 2, cy - y_offset),
+            end=(cx + self.length / 2, cy - y_offset),
+            width=self.width,
+        )
+        
+        # Union of both
+        return np.minimum(wg_top(x, y), wg_bot(x, y))
+
+
 # =============================================================================
 # Boolean Operations
 # =============================================================================
@@ -521,6 +561,7 @@ __all__ = [
     # Components
     "Waveguide",
     "Bend90",
+    "DirectionalCoupler",
     # Boolean operations
     "Union_",
     "Intersection",
