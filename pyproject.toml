@@ -1,0 +1,211 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "photonic-forge"
+version = "0.1.0"
+description = "PhotonicForge: AI-powered photonic chip design platform with differentiable geometry and democratized EDA"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "PhotonicForge Team", email = "team@photonic-forge.io"}
+]
+keywords = [
+    "photonics",
+    "EDA",
+    "photonic-integrated-circuits",
+    "differentiable-design",
+    "AI",
+    "inverse-design",
+    "silicon-photonics",
+    "optical-engineering",
+    "agentic-design"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+    "loguru>=0.7.2",
+]
+
+[project.optional-dependencies]
+
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.12.0",
+    "ruff>=0.1.11",
+    "mypy>=1.7.1",
+    "pre-commit>=3.5.0",
+]
+
+notebook = [
+    "jupyter>=1.0.0",
+    "ipykernel>=6.26.0",
+    "jupyterlab>=4.0.0",
+]
+
+viz = [
+    "matplotlib>=3.8.0",
+    "plotly>=5.17.0",
+]
+
+gds = [
+    "gdstk>=0.9.40",
+    "scikit-image>=0.21.0",
+]
+
+solvers = [
+    "jax>=0.4.20",
+    "jaxlib>=0.4.20",
+    "tidy3d-core>=2.7.0",
+]
+
+optimize = [
+    "jaxopt>=0.8.1",
+]
+
+ml = [
+    "onnx>=1.15.0",
+    "onnxruntime>=1.17.0",
+]
+
+agent = [
+    "anthropic>=0.27.0",
+    "pydantic>=2.5.0",
+]
+
+ui = [
+    "streamlit>=1.35.0",
+    "plotly>=5.17.0",
+]
+
+api = [
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "python-dotenv>=1.0.0",
+]
+
+all = [
+    "photonic-forge[dev,notebook,viz,gds,solvers,optimize,ml,agent,ui,api]",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/photonic-forge"
+Documentation = "https://photonic-forge.io/docs"
+Repository = "https://github.com/yourusername/photonic-forge.git"
+Issues = "https://github.com/yourusername/photonic-forge/issues"
+
+[tool.setuptools]
+packages = ["photonic_forge"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.package-data]
+photonic_forge = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--cov=photonic_forge",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests",
+    "requires_gpu: Tests requiring GPU",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # Line too long (handled by black)
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"tests/**" = ["F401", "F811"]
+
+[tool.ruff.isort]
+known-first-party = ["photonic_forge"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+follow_imports = "normal"
+
+[[tool.mypy.overrides]]
+module = [
+    "scipy.*",
+    "numpy.*",
+    "jax.*",
+]
+ignore_missing_imports = true
