@@ -116,7 +116,7 @@ PhotonicForge is licensed under the **Apache License 2.0**. See [LICENSE](LICENS
 
 ## Contact
 - **GitHub:** [edwinsamuelojeda/photonic-forge](https://github.com/edwinsamuelojeda/photonic-forge)
-- **Email:** team@photonic-forge.io
+- **Email:** mr.edwinojeda@gmail.com
 
 ---
 
