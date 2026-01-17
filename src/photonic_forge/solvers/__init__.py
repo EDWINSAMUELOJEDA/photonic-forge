@@ -5,22 +5,22 @@ Provides FDTD simulation backends and photonic metrics.
 
 from photonic_forge.solvers.base import (
     FDTDSolver,
-    SourceConfig,
     MonitorConfig,
     SimulationResult,
+    SourceConfig,
 )
 from photonic_forge.solvers.metrics import (
-    insertion_loss,
-    return_loss,
+    bandwidth_3db,
     crosstalk,
     group_delay,
+    insertion_loss,
+    return_loss,
     transmission_efficiency,
-    bandwidth_3db,
 )
 
 # Meep wrapper is optional (requires Meep installation)
 try:
-    from photonic_forge.solvers.meep_wrapper import MeepSolver, HAS_MEEP
+    from photonic_forge.solvers.meep_wrapper import HAS_MEEP, MeepSolver
 except ImportError:
     HAS_MEEP = False
 

@@ -1,0 +1,40 @@
+{
+  "conversation_id": "demo-session-01",
+  "timestamp": 1768617465.0334406,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Create a straight waveguide, 10 microns long and 500nm wide."
+    },
+    {
+      "role": "assistant",
+      "content": "I will create a waveguide with length 10um and width 500nm.",
+      "tool_calls": [
+        {
+          "name": "create_waveguide",
+          "arguments": {
+            "length": 1e-05,
+            "width": 5e-07
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "Tool 'create_waveguide' returned: Created Waveguide(length=10.00um, width=500nm)",
+      "tool_outputs": [
+        {
+          "name": "create_waveguide",
+          "output": "Created Waveguide(length=10.00um, width=500nm)"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "I've created the waveguide as requested."
+    }
+  ],
+  "metadata": {
+    "user_intent": "create_waveguide"
+  }
+}

@@ -83,6 +83,7 @@ optimize = [
 ]
 
 ml = [
+    "torch>=2.0.0",
     "onnx>=1.15.0",
     "onnxruntime>=1.17.0",
 ]
@@ -168,6 +169,8 @@ exclude = '''
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint]
 select = [
     "E",      # pycodestyle errors
     "W",      # pycodestyle warnings
@@ -183,11 +186,13 @@ ignore = [
     "E501",   # Line too long (handled by black)
 ]
 
-[tool.ruff.per-file-ignores]
-"__init__.py" = ["F401", "F403"]
-"tests/**" = ["F401", "F811"]
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403", "E402"]
+"tests/**" = ["F401", "F811", "N806"]
+"src/photonic_forge/core/geometry.py" = ["N801"]  # Union_ is intentionally named to avoid keyword conflict
+"src/photonic_forge/optimize/algorithms.py" = ["F401"]  # jax/jaxopt imported for availability check
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["photonic_forge"]
 
 [tool.mypy]

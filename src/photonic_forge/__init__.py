@@ -11,6 +11,6 @@ from loguru import logger
 
 logger.disable("photonic_forge")
 
-from photonic_forge import core, solvers, optimize
+from photonic_forge import core, optimize, solvers
 
 __all__ = ["core", "solvers", "optimize", "__version__"]

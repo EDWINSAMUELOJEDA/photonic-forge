@@ -1,21 +1,21 @@
 """Unit tests for SDF geometry module."""
 
-import pytest
 import numpy as np
+import pytest
 
 from photonic_forge.core.geometry import (
     SDF2D,
-    Rectangle,
-    Circle,
-    RoundedRectangle,
-    Waveguide,
     Bend90,
-    Union_,
+    Circle,
     Intersection,
-    Subtraction,
+    Rectangle,
+    RoundedRectangle,
     SmoothUnion,
-    union,
+    Subtraction,
+    Union_,
+    Waveguide,
     intersection,
+    union,
 )
 from photonic_forge.core.materials import SILICON, SILICON_DIOXIDE
 
@@ -288,7 +288,7 @@ class TestGridEvaluation:
         """to_array() produces correct sign pattern."""
         circle = Circle(center=(0, 0), radius=1)
         arr = circle.to_array(bounds=(-2, -2, 2, 2), resolution=0.1)
-        
+
         # Center pixel (around index 20, 20) should be negative
         center_value = arr[20, 20]
         assert center_value < 0, "Center should be inside"
@@ -358,7 +358,7 @@ class TestPackageImport:
 
     def test_import_geometry_classes(self):
         """Test that geometry classes can be imported from core."""
-        from photonic_forge.core import Rectangle, Circle, Waveguide
+        from photonic_forge.core import Circle, Rectangle, Waveguide
 
         assert Rectangle is not None
         assert Circle is not None
@@ -382,11 +382,11 @@ class TestBend90SDF:
         # Center of arc is at 45 degrees.
         # Radius 5.
         bend = Bend90(center=(0, 0), radius=5, width=2)
-        
+
         angle = np.pi / 4
         x = 5 * np.cos(angle)
         y = 5 * np.sin(angle)
-        
+
         dist = bend.distance(np.array([x]), np.array([y]))
         assert dist[0] < 0
         assert dist[0] == pytest.approx(-1.0, rel=1e-6) # width/2 = 1.0 inside
@@ -394,11 +394,11 @@ class TestBend90SDF:
     def test_bend90_start_endpoint(self):
         """Start endpoint should be inside (due to rounded caps)."""
         bend = Bend90(center=(0, 0), radius=5, width=2, start_angle=0)
-        
+
         # Start point on the central arc
         x = 5.0
         y = 0.0
-        
+
         dist = bend.distance(np.array([x]), np.array([y]))
         assert dist[0] < 0
         assert dist[0] == pytest.approx(-1.0, rel=1e-6)
@@ -406,11 +406,11 @@ class TestBend90SDF:
     def test_bend90_end_endpoint(self):
         """End endpoint should be inside."""
         bend = Bend90(center=(0, 0), radius=5, width=2, start_angle=0)
-        
+
         # End point on the central arc (at 90 deg)
         x = 0.0
         y = 5.0
-        
+
         dist = bend.distance(np.array([x]), np.array([y]))
         assert dist[0] < 0
         assert dist[0] == pytest.approx(-1.0, rel=1e-6)
@@ -418,7 +418,7 @@ class TestBend90SDF:
     def test_bend90_outside_inner_radius(self):
         """Point inside the curve (smaller radius) should be outside."""
         bend = Bend90(center=(0, 0), radius=5, width=2)
-        
+
         # Radius 3 (5 - 2) -> 1 unit outside the width (width is 2, so inner edge is 4)
         # Wait, center radius 5. Width 2. Inner edge radius is 4. Outer edge radius is 6.
         # Point at radius 3 is 1 unit away from inner edge.
@@ -429,7 +429,7 @@ class TestBend90SDF:
     def test_bend90_outside_outer_radius(self):
         """Point outside the curve (larger radius) should be outside."""
         bend = Bend90(center=(0, 0), radius=5, width=2)
-        
+
         # Radius 8. Outer edge at 6. Dist should be 2.
         dist = bend.distance(np.array([8.0]), np.array([0.0]))
         assert dist[0] > 0
@@ -442,7 +442,7 @@ class TestComponentJunctions:
     def test_waveguide_bend_junction(self):
         """Verify smooth transition between Waveguide and Bend90."""
         # Waveguide ending at (0,0), width 2
-        # Bend starting at (0,0) approx? 
+        # Bend starting at (0,0) approx?
         # No, Bend is defined by Center and Radius.
         # If Bend starts at (0,0) with angle 0, its center must be at (0, R) ? No.
         # Start point of bend is center + R * (cos, sin)
@@ -465,37 +465,37 @@ class TestComponentJunctions:
         # So Center = (0, R).
         # Pos vector = Start - Center = (0, -R).
         # Angle of pos vector = -pi/2.
-        
-        R = 10.0
+
+        radius = 10.0
         width = 2.0
-        
+
         # Waveguide from (-10, 0) to (0, 0)
         wg = Waveguide(start=(-10.0, 0.0), end=(0.0, 0.0), width=width)
-        
+
         # Bend turning Left (to +Y)
-        # Center (0, R). Start angle -pi/2 (bottom of circle).
-        bend = Bend90(center=(0.0, R), radius=R, width=width, start_angle=-np.pi/2)
-        
+        # Center (0, radius). Start angle -pi/2 (bottom of circle).
+        bend = Bend90(center=(0.0, radius), radius=radius, width=width, start_angle=-np.pi/2)
+
         # Interface is at x=0.
         # Check SDF values near the interface.
-        
+
         # Point just inside Waveguide
         p_wg = np.array([-0.1, 0.0])
         # Point just inside Bend
         p_bend = np.array([0.1, 0.0]) # At very small angle, y ~ 0.
-        
+
         u = wg | bend
-        
+
         d_wg = u(np.array([p_wg[0]]), np.array([p_wg[1]]))[0]
         d_bend = u(np.array([p_bend[0]]), np.array([p_bend[1]]))[0]
-        
+
         assert d_wg < 0
         assert d_bend < 0
-        
+
         # Check exactly at interface (0,0)
         d_zero = u(np.array([0.0]), np.array([0.0]))[0]
         assert d_zero < 0 # Should be inside
-        
+
         # Check corner watertightness
         # Corner is at (0, width/2) = (0, 1)
         d_corner = u(np.array([0.0]), np.array([1.0]))[0]

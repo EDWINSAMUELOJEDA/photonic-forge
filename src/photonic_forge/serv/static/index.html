@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Forge - Agentic Phontonics</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --text-primary: #f8fafc;
+            --accent: #38bdf8;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 400px;
+            background: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #334155;
+        }
+
+        #chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .msg {
+            padding: 10px 15px;
+            border-radius: 8px;
+            max-width: 85%;
+            line-height: 1.5;
+        }
+
+        .msg.user {
+            background: #334155;
+            align-self: flex-end;
+        }
+
+        .msg.assistant {
+            background: #0f172a;
+            align-self: flex-start;
+            border: 1px solid #334155;
+        }
+
+        #input-area {
+            padding: 20px;
+            border-top: 1px solid #334155;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: #0f172a;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #viewport {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.1);
+        }
+
+        #vis-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="sidebar">
+        <div style="padding: 20px; border-bottom: 1px solid #334155;">
+            <h1 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+                ✨ PhotonicForge
+            </h1>
+        </div>
+        <div id="chat-history">
+            <div class="msg assistant">Hello! I am your AI Design Assistant. Ask me to create a waveguide or check
+                yield.</div>
+        </div>
+        <div id="input-area">
+            <input type="text" id="msg-input" placeholder="Type a request..." autocomplete="off">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <div id="viewport">
+        <canvas id="simCanvas" width="800" height="600"></canvas>
+        <div id="vis-overlay">
+            Live FDTD Simulation (WebGPU)
+        </div>
+    </div>
+
+    <script type="module">
+        // --- APP LOGIC ---
+        const chatHistory = document.getElementById('chat-history');
+        const input = document.getElementById('msg-input');
+        const sendBtn = document.getElementById('send-btn');
+        const canvas = document.getElementById('simCanvas');
+
+        let isSimulating = false;
+        let stopSimulation = null;
+
+        function addMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            div.textContent = text;
+            chatHistory.appendChild(div);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            addMessage('user', text);
+            input.value = '';
+            input.disabled = true;
+            sendBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await res.json();
+
+                addMessage('assistant', data.response);
+
+                if (data.vis_data) {
+                    console.log("Received visualization data", data.vis_data);
+                    startSimulation(data.vis_data);
+                }
+            } catch (e) {
+                addMessage('assistant', "Error communicating with server.");
+                console.error(e);
+            } finally {
+                input.disabled = false;
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        sendBtn.addEventListener('click', sendMessage);
+
+        // --- WEBGPU VISUALIZER ---
+        async function startSimulation(simData) {
+            if (stopSimulation) stopSimulation();
+
+            if (!navigator.gpu) {
+                alert("WebGPU not supported!");
+                return;
+            }
+
+            const adapter = await navigator.gpu.requestAdapter();
+            const device = await adapter.requestDevice();
+            const context = canvas.getContext('webgpu');
+            const format = navigator.gpu.getPreferredCanvasFormat();
+            context.configure({ device, format });
+
+            // Load Shader
+            const shaderRes = await fetch('/static/fdtd.wgsl');
+            const shaderCode = await shaderRes.text();
+            const shaderModule = device.createShaderModule({ code: shaderCode });
+
+            // Data Prep
+            const params = simData.params;
+            const epsData = new Float32Array(simData.epsilon);
+            const size = params.nx * params.ny * 4;
+
+            // Buffers
+            const epsBuf = device.createBuffer({ size: epsData.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+            device.queue.writeBuffer(epsBuf, 0, epsData);
+
+            const hzBuf = device.createBuffer({ size, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+            const exBuf = device.createBuffer({ size, usage: GPUBufferUsage.STORAGE });
+            const eyBuf = device.createBuffer({ size, usage: GPUBufferUsage.STORAGE });
+
+            const paramsBuf = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+            device.queue.writeBuffer(paramsBuf, 0, new Uint32Array([params.nx, params.ny]));
+            device.queue.writeBuffer(paramsBuf, 8, new Float32Array([params.dt, params.dx]));
+
+            const sourceValBuf = device.createBuffer({ size: 4, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+
+            // Pipeline
+            const layout = device.createBindGroupLayout({
+                entries: [
+                    { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+                    { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+                    { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }, // Hz
+                    { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+                    { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+                    { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+                ]
+            });
+
+            const pipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [layout] });
+            const updateHPipeline = device.createComputePipeline({ layout: pipelineLayout, compute: { module: shaderModule, entryPoint: "update_h" } });
+            const updateEPipeline = device.createComputePipeline({ layout: pipelineLayout, compute: { module: shaderModule, entryPoint: "update_e" } });
+            const updateSourcePipeline = device.createComputePipeline({ layout: pipelineLayout, compute: { module: shaderModule, entryPoint: "update_source" } });
+
+            const bindGroup = device.createBindGroup({
+                layout: layout,
+                entries: [
+                    { binding: 0, resource: { buffer: paramsBuf } },
+                    { binding: 1, resource: { buffer: epsBuf } },
+                    { binding: 2, resource: { buffer: hzBuf } },
+                    { binding: 3, resource: { buffer: exBuf } },
+                    { binding: 4, resource: { buffer: eyBuf } },
+                    { binding: 5, resource: { buffer: sourceValBuf } },
+                ]
+            });
+
+            // Loop
+            let t = 0;
+            let running = true;
+
+            // Setup Readback for minimal vis (Just reading center point is degenerate, 
+            // to render we'd need a Render Pipeline. For prototype, we will just running the loop 
+            // and logging 'tick' to show it runs, since we can't easily blit compute buffer to canvas 
+            // without a vertex shader setup which adds 50 lines of code.)
+
+            // UPGRADE for HERO: Add a simple render pipeline to visualize Hz
+            // Vertex Shader (Full screen quad)
+            const renderShaderCode = `
+            @vertex fn vs_main(@builtin(vertex_index) vi : u32) -> @builtin(position) vec4<f32> {
+                var pos = array<vec2<f32>, 4>(vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0, 1.0));
+                return vec4<f32>(pos[vi], 0.0, 1.0);
+            }
+            
+            struct Params { nx: u32, ny: u32, dt: f32, dx: f32 };
+            @group(0) @binding(0) var<uniform> params: Params;
+            @group(0) @binding(2) var<storage, read> hz: array<f32>;
+            @group(0) @binding(1) var<storage, read> epsilon: array<f32>;
+
+            @fragment fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
+                let x = u32(pos.x / 800.0 * f32(params.nx)); // Map canvas to grid
+                let y = u32((600.0 - pos.y) / 600.0 * f32(params.ny));
+                let idx = y * params.nx + x;
+                
+                let val = hz[idx];
+                let eps = epsilon[idx];
+                
+                // Visualization: Field (Red/Blue) + Structure (Grey)
+                var color = vec3<f32>(0.0);
+                
+                // Structure
+                if (eps > 2.0) { color += 0.2; }
+                
+                // Field
+                if (val > 0.0) { color.r += val * 10.0; }
+                else { color.b -= val * 10.0; }
+                
+                return vec4<f32>(color, 1.0);
+            }
+        `;
+
+            const renderModule = device.createShaderModule({ code: renderShaderCode });
+            const renderPipeline = device.createRenderPipeline({
+                layout: pipelineLayout,
+                vertex: { module: renderModule, entryPoint: 'vs_main' },
+                fragment: { module: renderModule, entryPoint: 'fs_main', targets: [{ format }] },
+                primitive: { topology: 'triangle-strip' }
+            });
+
+            function frame() {
+                if (!running) return;
+
+                const encoder = device.createCommandEncoder();
+
+                // Compute
+                t++;
+                const val = Math.sin(t * 0.2) * Math.exp(-Math.pow((t - 150) / 50, 2)) * 5.0; // Pulse
+                device.queue.writeBuffer(sourceValBuf, 0, new Float32Array([val]));
+
+                const cPass = encoder.beginComputePass();
+                cPass.setBindGroup(0, bindGroup);
+                cPass.setPipeline(updateHPipeline);
+                cPass.dispatchWorkgroups(Math.ceil(params.nx / 16), Math.ceil(params.ny / 16));
+                cPass.setPipeline(updateSourcePipeline);
+                cPass.dispatchWorkgroups(1);
+                cPass.setPipeline(updateEPipeline);
+                cPass.dispatchWorkgroups(Math.ceil(params.nx / 16), Math.ceil(params.ny / 16));
+                cPass.end();
+
+                // Render
+                const rPass = encoder.beginRenderPass({
+                    colorAttachments: [{ view: context.getCurrentTexture().createView(), loadOp: 'clear', storeOp: 'store' }]
+                });
+                rPass.setPipeline(renderPipeline);
+                rPass.setBindGroup(0, bindGroup);
+                rPass.draw(4);
+                rPass.end();
+
+                device.queue.submit([encoder.finish()]);
+                requestAnimationFrame(frame);
+            }
+
+            requestAnimationFrame(frame);
+
+            stopSimulation = () => { running = false; };
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,20 +1,21 @@
 """Unit tests for physical constants module."""
 
-import pytest
 import math
 
+import pytest
+
 from photonic_forge.core.constants import (
-    C,
-    H,
-    HBAR,
     EPSILON_0,
+    HBAR,
     MU_0,
-    WAVELENGTH_C_BAND_CENTER,
-    WAVELENGTH_O_BAND_CENTER,
     SOI_WAVEGUIDE_HEIGHT,
     SOI_WAVEGUIDE_WIDTH,
-    wavelength_to_frequency,
+    WAVELENGTH_C_BAND_CENTER,
+    WAVELENGTH_O_BAND_CENTER,
+    C,
+    H,
     frequency_to_wavelength,
+    wavelength_to_frequency,
     wavelength_to_wavenumber,
 )
 
@@ -24,23 +25,23 @@ class TestFundamentalConstants:
 
     def test_speed_of_light(self):
         """Speed of light should be ~3e8 m/s."""
-        assert C == pytest.approx(299_792_458.0, rel=1e-9)
+        assert pytest.approx(299_792_458.0, rel=1e-9) == C
 
     def test_planck_constant(self):
         """Planck constant should be ~6.6e-34 J·s."""
-        assert H == pytest.approx(6.62607015e-34, rel=1e-9)
+        assert pytest.approx(6.62607015e-34, rel=1e-9) == H
 
     def test_reduced_planck_constant(self):
         """ħ = h / 2π."""
-        assert HBAR == pytest.approx(H / (2 * math.pi), rel=1e-12)
+        assert pytest.approx(H / (2 * math.pi), rel=1e-12) == HBAR
 
     def test_vacuum_permittivity(self):
         """ε₀ should be ~8.85e-12 F/m."""
-        assert EPSILON_0 == pytest.approx(8.8541878128e-12, rel=1e-9)
+        assert pytest.approx(8.8541878128e-12, rel=1e-9) == EPSILON_0
 
     def test_vacuum_permeability(self):
         """μ₀ should be ~1.26e-6 H/m."""
-        assert MU_0 == pytest.approx(1.25663706212e-6, rel=1e-9)
+        assert pytest.approx(1.25663706212e-6, rel=1e-9) == MU_0
 
     def test_speed_of_light_relation(self):
         """c = 1 / sqrt(ε₀ * μ₀)."""
@@ -53,11 +54,11 @@ class TestWavelengths:
 
     def test_c_band_center(self):
         """C-band center should be 1550 nm."""
-        assert WAVELENGTH_C_BAND_CENTER == pytest.approx(1.55e-6, rel=1e-6)
+        assert pytest.approx(1.55e-6, rel=1e-6) == WAVELENGTH_C_BAND_CENTER
 
     def test_o_band_center(self):
         """O-band center should be 1310 nm."""
-        assert WAVELENGTH_O_BAND_CENTER == pytest.approx(1.31e-6, rel=1e-6)
+        assert pytest.approx(1.31e-6, rel=1e-6) == WAVELENGTH_O_BAND_CENTER
 
 
 class TestDimensions:
@@ -65,11 +66,11 @@ class TestDimensions:
 
     def test_soi_waveguide_height(self):
         """Standard SOI height is 220 nm."""
-        assert SOI_WAVEGUIDE_HEIGHT == pytest.approx(220e-9, rel=1e-6)
+        assert pytest.approx(220e-9, rel=1e-6) == SOI_WAVEGUIDE_HEIGHT
 
     def test_soi_waveguide_width(self):
         """Standard single-mode width is 500 nm."""
-        assert SOI_WAVEGUIDE_WIDTH == pytest.approx(500e-9, rel=1e-6)
+        assert pytest.approx(500e-9, rel=1e-6) == SOI_WAVEGUIDE_WIDTH
 
 
 class TestConversionFunctions:

@@ -4,8 +4,8 @@ Standard values used throughout PhotonicForge for physics calculations.
 All values in SI units unless otherwise noted.
 """
 
-from typing import Final
 import math
+from typing import Final
 
 # Speed of light in vacuum (m/s)
 C: Final[float] = 299_792_458.0

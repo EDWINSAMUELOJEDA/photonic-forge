@@ -1,20 +1,20 @@
 """Unit tests for materials module."""
 
-import pytest
 import numpy as np
+import pytest
 
 from photonic_forge.core.materials import (
-    Material,
+    AIR,
+    ALUMINUM,
+    MATERIAL_REGISTRY,
     SILICON,
     SILICON_DIOXIDE,
     SILICON_NITRIDE,
-    AIR,
     VACUUM,
-    ALUMINUM,
+    Material,
     get_material,
     get_permittivity,
     permittivity_to_n,
-    MATERIAL_REGISTRY,
 )
 
 

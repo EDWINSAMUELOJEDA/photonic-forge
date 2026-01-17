@@ -11,7 +11,7 @@ This representation is differentiable and ideal for gradient-based optimization.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Tuple, Union, Optional
+
 import numpy as np
 
 try:
@@ -21,12 +21,11 @@ try:
 except ImportError:
     HAS_GDS_SUPPORT = False
 
-from .materials import Material, SILICON, SILICON_DIOXIDE
-
+from .materials import SILICON, SILICON_DIOXIDE, Material
 
 # Type aliases
-Point2D = Tuple[float, float]
-Bounds2D = Tuple[float, float, float, float]  # (x_min, y_min, x_max, y_max)
+Point2D = tuple[float, float]
+Bounds2D = tuple[float, float, float, float]  # (x_min, y_min, x_max, y_max)
 
 
 # =============================================================================
@@ -135,39 +134,39 @@ class SDF2D(ABC):
             )
 
         sdf = self.to_array(bounds, resolution)
-        
+
         # Find contours at level 0 (boundary)
         # We need to map grid indices back to physical coordinates
-        contours = find_contours(sdf.T, 0.0) 
-        # Note: sdf is (y, x), but find_contours returns (row, col) = (y, x). 
-        # We want (x, y) points. 
+        contours = find_contours(sdf.T, 0.0)
+        # Note: sdf is (y, x), but find_contours returns (row, col) = (y, x).
+        # We want (x, y) points.
         # Actually measure.find_contours returns list of (row, column) coordinates.
         # If we pass sdf.T which is (x, y), we get (x_idx, y_idx).
-        # Let's verify: sdf is shape (ny, nx). 
+        # Let's verify: sdf is shape (ny, nx).
         # sdf[j, i] corresponds to y[j], x[i].
         # contours of sdf returns (row, col) -> (y_idx, x_idx).
-        # So points are (y_idx, x_idx). We want (x, y). 
+        # So points are (y_idx, x_idx). We want (x, y).
         # So we should swap columns: points[:, [1, 0]].
-        
+
         x_min, y_min, _, _ = bounds
-        
+
         polygons = []
         for contour in contours:
             # contour is (N, 2) array of (row, col) = (y_idx, x_idx)
             # Convert to physical coordinates
             # x = x_min + col * resolution
             # y = y_min + row * resolution
-            
+
             pts_x = x_min + contour[:, 1] * resolution
             pts_y = y_min + contour[:, 0] * resolution
-            
+
             # Combine into (N, 2) array
             points = np.column_stack((pts_x, pts_y))
-            
+
             # Create polygon
             poly = gdstk.Polygon(points, layer=layer, datatype=datatype)
             polygons.append(poly)
-            
+
         return polygons
 
     def __or__(self, other: "SDF2D") -> "Union_":
@@ -426,21 +425,21 @@ class DirectionalCoupler(SDF2D):
         """Signed distance to coupler."""
         cx, cy = self.center
         y_offset = (self.width + self.gap) / 2
-        
+
         # Top waveguide
         wg_top = Waveguide(
             start=(cx - self.length / 2, cy + y_offset),
             end=(cx + self.length / 2, cy + y_offset),
             width=self.width,
         )
-        
+
         # Bottom waveguide
         wg_bot = Waveguide(
             start=(cx - self.length / 2, cy - y_offset),
             end=(cx + self.length / 2, cy - y_offset),
             width=self.width,
         )
-        
+
         # Union of both
         return np.minimum(wg_top(x, y), wg_bot(x, y))
 
