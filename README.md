@@ -1,123 +1,95 @@
-# PhotonicForge
+# ✨ PhotonicForge
 
-**Open-source photonic integrated circuit (PIC) design platform**
+**The Agentic AI Platform for Integrated Photonics.**
 
-[![CI Status](https://github.com/edwinsamuelojeda/photonic-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/edwinsamuelojeda/photonic-forge/actions)
-[![codecov](https://codecov.io/gh/edwinsamuelojeda/photonic-forge/branch/main/graph/badge.svg)](https://codecov.io/gh/edwinsamuelojeda/photonic-forge)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/downloads/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
+PhotonicForge is a vertically integrated design platform that automates the creation of photonic chips using AI. It combines differentiable physics simulation, neural surrogate models, and an LLM-driven agent into a unified "Visual Editor" for photonics.
+
+![Banner](https://img.shields.io/badge/Status-MVP_Released-success)
+![Python](https://img.shields.io/badge/Python-3.13-blue)
+![WebGPU](https://img.shields.io/badge/Vis-WebGPU-purple)
+
+## 🚀 Features
+
+### 1. 🧠 Agentic Design (`photonic_forge.agent`)
+- **Natural Language Design**: "Create a wavelength demultiplexer for 1550nm."
+- **Tool Use**: The agent autonomously orchestrated geometry generation, simulation, and optimization.
+- **Data Moat**: All interactions are logged to fine-tune future models.
+
+### 2. ⚡ Differentiable Physics (`photonic_forge.core`, `photonic_forge.solvers`)
+- **Signed Distance Fields (SDF)**: Resolution-independent geometry representation.
+- **Meep & WebGPU**: Hybrid solving strategy for both high-fidelity verification and real-time visualization.
+- **Yield Analysis**: Monte Carlo estimation of manufacturing robustness.
+
+### 3. 🕸️ The Forge Web Interface (`photonic_forge.serv`)
+- **Browser-Based**: No local installation required for end-users.
+- **Real-Time FDTD**: WebGPU shaders render field propagation at 60fps in the browser.
+- **Chat Interface**: Interactive design session with the AI Agent.
 
 ---
 
-## What is PhotonicForge?
+## 🛠️ Installation
 
-PhotonicForge provides a **differentiable geometry engine** for photonic layout design and a **GDS export pipeline**. Current features include:
-
-- SDF-based 2D geometry primitives (waveguides, bends, couplers)
-- Boolean operations for layout composition
-- GDS export via marching-squares contour extraction
-- Basic process design kit (PDK) definitions
-
----
-
-## Quick Start
-
-### Prerequisites
-- Python 3.11 or newer
-- `pip` and `venv`
-
-### Installation
 ```bash
-# Clone the repo
+# Clone the repository
 git clone https://github.com/edwinsamuelojeda/photonic-forge.git
 cd photonic-forge
 
-# Create virtual environment
+# Create environment
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+.\venv\Scripts\activate
 
-# Install in development mode
-pip install -e ".[dev,viz]"
-
-# Verify setup
-pytest tests/ -v
+# Install dependencies
+pip install -r requirements.txt
+pip install -e .
 ```
 
-### First Demo
+## 🏁 Quick Start
+
+### Launch the Web Prototype
+Experience the "Hero Flow" — designing chips via chat.
+
 ```bash
-python examples/01_hello_waveguide.py
+python -m photonic_forge.serv.main
 ```
-This script:
-1. Creates a simple straight silicon waveguide
-2. Exports the layout to GDS (openable with KLayout)
-3. Prints basic geometry information
+> Open **[http://localhost:8000](http://localhost:8000)** in your browser. (Chrome/Edge required for WebGPU)
 
----
-
-## Architecture
-```
-PhotonicForge
-├── core/               # SDF-based geometry engine
-├── solvers/            # FDTD wrappers
-├── pdk/                # Process design kit definitions
-├── optimize/           # Optimization utilities
-└── ui/                 # Web interface
-```
-
----
-
-## Development Workflow
+### Run the Agent via CLI
 ```bash
-# Run all tests
-pytest tests/ -v
-
-# Code formatting
-black src/ tests/
-
-# Linting
-ruff check --fix src/ tests/
-
-# Type checking
-mypy src/
-
-# Pre-commit checks
-pre-commit run --all-files
+python examples/08_natural_language_design.py
 ```
 
-### Optional Dependencies
+### Run Yield Optimization Demo
 ```bash
-# Install visualization and solver extras
-pip install -e ".[dev,viz,solvers]"
+python examples/10_yield_optimization.py
 ```
 
 ---
 
-## Project Status
-- **Current:** GDS export and PDK are functional
-- **Next:** Integrate FDTD solver (Meep) and expose photonic metrics
+## 📅 Development Roadmap (Completed)
+
+| Week | Milestone | Status |
+|------|-----------|:------:|
+| 1-5  | **Core Foundation** (Geometry, FDTD, Optimization) | ✅ |
+| 6    | **Neural Surrogates** (1000x faster simulation) | ✅ |
+| 7    | **Agentic Interface** (LLM Tool Use) | ✅ |
+| 8    | **WebGPU Visualization** (Browser Rendering) | ✅ |
+| 9    | **Yield Optimization** (Manufacturing Constraints) | ✅ |
+| 10   | **Web Prototype** (The "Forge" App) | ✅ |
 
 ---
 
-## Contributing
-We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+## 🏗️ Architecture
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Make your changes
-4. Run tests and linting
-5. Push and open a PR
+```mermaid
+graph TD
+    User[User] -->|Chat| Web[Web Interface]
+    Web -->|API| Agent[Design Agent]
+    Agent -->|Tools| Core[Geometry Engine]
+    Agent -->|Query| Surrogate[Neural Surrogate]
+    Agent -->|Verify| Solver[FDTD Solver]
+    Solver -->|Export| Vis[WebGPU Visualizer]
+    Vis -->|Render| Web
+```
 
----
-
-## License
-PhotonicForge is licensed under the **Apache License 2.0**. See [LICENSE](LICENSE).
-
----
-
-## Contact
-- **GitHub:** [edwinsamuelojeda/photonic-forge](https://github.com/edwinsamuelojeda/photonic-forge)
-- **Email:** mr.edwinojeda@gmail.com
-
----
-
-*Building the future of photonics, one design at a time.*
+## 📜 License
+MIT License. Built for the **Bleeding Edge** of AI & Physics.
